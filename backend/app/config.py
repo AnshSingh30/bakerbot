@@ -8,14 +8,16 @@ from langchain_core.embeddings import Embeddings
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")          # found regardless of which directory you run from
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_URL = os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1")
-LLM_MODEL = os.getenv("LLM_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
+# .strip() everywhere: a key pasted into a dashboard with a trailing newline makes an illegal
+# HTTP header, which the openai SDK reports as the very unhelpful "Connection error."
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+OPENROUTER_URL = os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1").strip()
+LLM_MODEL = os.getenv("LLM_MODEL", "nvidia/nemotron-3-super-120b-a12b:free").strip()
 # Free models run on a shared upstream pool and return 429 without warning. OpenRouter routes
 # to the next model in this list when that happens. All must support tool calling.
-FALLBACK_MODELS = [m for m in os.getenv(
+FALLBACK_MODELS = [m.strip() for m in os.getenv(
     "FALLBACK_MODELS",
-    "nvidia/nemotron-3-nano-30b-a3b:free,nvidia/nemotron-nano-9b-v2:free").split(",") if m]
+    "nvidia/nemotron-3-nano-30b-a3b:free,nvidia/nemotron-nano-9b-v2:free").split(",") if m.strip()]
 CHROMA_DIR = os.getenv("CHROMA_DIR", str(BASE_DIR / ".chroma"))
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'orders.db'}")
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "demo-token")
