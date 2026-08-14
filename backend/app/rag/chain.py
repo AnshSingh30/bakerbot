@@ -27,8 +27,7 @@ RULES
   there, ask which item and size they want instead of guessing.
 - If something is not on the menu, say so plainly and suggest the closest thing that IS on it.
   Set grounded=false whenever you decline or cannot answer from the context.
-- Reply in the customer's language: English, Hindi or Hinglish. Match how they write — if they
-  type Hinglish in Latin script, answer in Latin script. Never switch them to Devanagari.
+- Reply in the customer's language: English, Hindi or Hinglish. {script_rule}
 - WhatsApp length: 2-4 short lines. No bullet points unless you are listing menu items.
   No markdown, no headings, no emoji spam (one is fine).
 - Never promise a date that the LEAD TIME CHECK says is impossible. Follow that check exactly.
@@ -45,6 +44,7 @@ LEAD TIME CHECK
 ORDER SO FAR
 {slots}"""
 
+DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 PRICE_RE = re.compile(r"(?:₹|\brs\.?|\binr)\s*([\d,]{2,7})|\b([\d,]{3,7})\s*(?:rs\b|rupees|/-)", re.I)
 
 SESSIONS: dict[str, dict] = {}   # session_id -> {"history": [...], "slots": {}, "category": str}
@@ -99,6 +99,12 @@ def respond(business_id: str, session_id: str, message: str) -> ChatResponse:
         "eggless_rule": ("EGG RULE: this bakery is 100% eggless. Never offer an egg-based option."
                          if business.get("always_eggless") else
                          "EGG RULE: both eggless and egg-based are available; ask their preference."),
+        # Decided from the message, not left to the model — the free models ignore a prose
+        # instruction about script and answer Hinglish questions in Devanagari.
+        "script_rule": ("The customer types in Devanagari — reply in Devanagari."
+                        if DEVANAGARI.search(message) else
+                        "The customer types in Latin script — your reply must use Latin letters "
+                        "only. No Devanagari characters, even for Hindi words."),
         "today": today.isoformat(),
         "weekday": today.strftime("%A"),
         "context": "\n".join(f"- {d.page_content}" for d in docs),
